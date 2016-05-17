@@ -28,8 +28,9 @@ shinyUI(fluidPage(
     fileInput('sites','Upload Sites',accept='.csv',width='100%'),
     #run analysis button
     actionButton('runButton','Run Sites'),
-    p('Click the Run Sites button after you have uploaded a .csv of stations')
+    p('Click the Run Sites button after you have uploaded a .csv of stations'),
     #download results button
+    downloadButton("downloadResults","Download Results")
     ),
   mainPanel(tableOutput('outputTable'),
     tableOutput('table'))

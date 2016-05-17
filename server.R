@@ -25,7 +25,7 @@ shinyServer(function(input,output,session){
         return(NULL)
       read.csv(inFile$datapath)
     })
-    finishText <- eventReactive(input$runButton,{withProgress(message='Making Connections',value=0,{
+    finishResults <- eventReactive(input$runButton,{withProgress(message='Making Connections',value=0,{
       # Bring in standards GIS layer, NWBD layer
       WQS <- readOGR('C:/HardDriveBackup/R/AssessmentTool/data','wqs_riverine_id305b_2013_albers')
       NWBD <- readOGR('C:/HardDriveBackup/R/AssessmentTool/data','vaNWBD_v4_albers')
@@ -109,7 +109,9 @@ shinyServer(function(input,output,session){
       return(output)
     })
     })
-    output$outputTable <- renderTable({finishText()})
+    output$outputTable <- renderTable({finishResults()})
+    output$downloadResults <- downloadHandler(filename=function(){paste('Results_',input$sites,sep='')},
+                                              content=function(file){write.csv(finishResults(),file)})
 })
 
 
