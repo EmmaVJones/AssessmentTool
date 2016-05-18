@@ -1,3 +1,5 @@
+library(shiny)
+library(shinyBS)
 library(raster)
 library(rgdal)
 library(maptools)
@@ -5,11 +7,7 @@ library(rgeos)
 library(reshape2)
 library(plyr)
 library(dplyr)
-library(ggplot2)
 library(ggmap)
-library(gWidgets)
-options(guiToolkit="RGtk2")
-library(readxl)
 library(leaflet)
 
 
@@ -32,7 +30,10 @@ shinyUI(fluidPage(
     #download results button
     downloadButton("downloadResults","Download Results")
     ),
-  mainPanel(tableOutput('outputTable'),
+  mainPanel(bsModal('modalPopup','User Stream Geometry Selection','runButton',size='large'
+                    ,leafletOutput("map", width="100%", height="100%")),
+                    #,plotOutput('map')),
+    tableOutput('outputTable'),
     tableOutput('table'))
 ))
 
