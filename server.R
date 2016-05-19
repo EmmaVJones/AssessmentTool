@@ -105,7 +105,7 @@ shinyServer(function(input,output,session){
                   #message$VAHU6 <- nwbd_site@data[,3]
                   message$SiteID <- i
                   message$StationID <- sites_shp@data$StationID[i]
-                  message$Comment <- 'use GIS for this site'
+                  message$Comment <- 'Use GIS for this site'
                   output1 <- rbind(output1,message)}
               })
             }
@@ -156,10 +156,6 @@ shinyServer(function(input,output,session){
             userselectentry <- rbind(userselectentry,splitdfselect_comment)
             # Save StationID to final output list
             sitelist[i] <- as.character(unique(splitdfselect_comment$StationID))
-            # what do i need to find these sites in the next pane???????
-            
-            
-            
           }
         }
       }
@@ -168,17 +164,16 @@ shinyServer(function(input,output,session){
         rbind(autoselectentry) %>%
         rbind(userselectentry)
     }
-    
-    
-    
-    return(slimoutput)
+        return(slimoutput)
   })
   })
   output$outputTable <- DT::renderDataTable({DT::datatable(finishResults(),options=list(lengthMenu=
                                                                            list(c(5,15,-1),c('5','15','All'))
                                                                          ,pageLength=5))})
-                                                           #,options=list(paging = FALSE))})
-                                                           #,options=list(pageLength=25))})
+  output$outputTableIssues <- DT::renderDataTable({DT::datatable(
+    subset(finishResults(), finishResults()$Comment %in% c("See Advanced Mapping Tab","Use GIS for this site"))
+           ,options=list(lengthMenu=list(c(5,15,-1),c('5','15','All')),pageLength=5))})
+                                                         
   output$downloadResults <- downloadHandler(filename=function(){paste('Results_',input$sites,sep='')},
                                             content=function(file){write.csv(finishResults(),file)})
 })
@@ -188,6 +183,14 @@ shinyServer(function(input,output,session){
 # and loop through those on the second tab, that tab should have 'run' button and radiobuttons that update 
 # to allow user to choose correct 305b
 # once user selections are made, need to output 'final' merged table for them to see and give download button
+
+
+### NAVBAR PAGE WITHIN TAB 1? then i could have second tab to pull in data for analysis... see Oregon guy code
+# term: tabset
+
+
+
+
 
 
 

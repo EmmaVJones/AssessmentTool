@@ -27,14 +27,21 @@ shinyUI(
                         #download results button
                         downloadButton("downloadResults","Download Results")
                       ),
-                      mainPanel(DT::dataTableOutput('outputTable'),
-                                tableOutput('table'))
-             ),
+                      mainPanel(
+                        tabsetPanel(
+                          tabPanel("Input Table",tableOutput('table')),
+                          tabPanel("Results Table",DT::dataTableOutput('outputTable')),
+                          tabPanel("Geometry Issues Table",DT::dataTableOutput('outputTableIssues'))
+                                )
+             )),
              tabPanel('Advanced Mapping',
-                      sidebarPanel(leafletOutput("map", width="100%", height="100%")
-                                   
-                      )
-             )
+                      sidebarPanel(leafletOutput("map2", width="100%", height="100%"))
+             ),
+             tabPanel('About',fluidRow(column(6,
+                      h3("This app was created for the DEQ Assessors to automate the Stations Table 
+                         building process."),
+                      h6("Please contact Emma Jones at emma.jones@deq.virginia.gov for additional 
+                         information."))))
   ))
 
 #leafletOutput('map305B'),
