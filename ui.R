@@ -38,13 +38,13 @@ shinyUI(
                         )
                       )),
              tabPanel('Advanced Mapping',
-                      sidebarPanel(actionButton('runButton2','Run Sites'),
-                                   p('Click the Run Sites button after you have identified sites in the previous step that latched to more than one stream geometry')),
+                      sidebarPanel(actionButton('runButton2','Run Problem Sites'),
+                                   p('Click the Run Sites button after you have identified sites in the previous step that need further review.')),
                       mainPanel(
                         tabsetPanel(
-                          tabPanel("Geometry Issues Table",tableOutput('outputTableIssues_repeat')),
-                          tabPanel("Map",leafletOutput("issueMap")),
-                          tabPanel("test",tableOutput('outputTableIssues_repeat2'))
+                          tabPanel("Sites For Review",tableOutput('outputTableIssues_test')),
+                          tabPanel("Map",leafletOutput("issueMap"))
+                          
                         ))
                       
              ),

@@ -15,7 +15,7 @@ library(DT)
 #WQS <- readOGR('C:/HardDriveBackup/R/AssessmentTool/data','wqs_riverine_id305b_2013_albers')
 #select <- readOGR('C:/HardDriveBackup/R/AssessmentTool/data','userselecttest20132014_prj84') # try to break the userselection section with mutliple sites that need help in 1 file
 #WQS_p <- readOGR('C:/GIS/EmmaGIS/Assessment','wqs_riverine_id305b_2013_Planarized84')
-#sites <- read.csv('data/sites_2009prob_SLIM.csv')
+#sites <- read.csv('data/sites_2009prob.csv')
 
 shinyServer(function(input,output,session){
   #### BASIC TOOL TAB ####
@@ -26,8 +26,8 @@ shinyServer(function(input,output,session){
   })
   output$inputTable <- renderTable({inputFile()})
   
-  
-  initialResults <- eventReactive(input$runButton,{withProgress(message='Making Connections',value=0,{
+  initialResults <- eventReactive(input$runButton,{withProgress(message='Processing Sites',value=0,{
+    incProgress(0.25, detail = 'Loading GIS data')
     ## Step 1: Bring in standards GIS layer, NWBD layer
     WQS <- readOGR('C:/HardDriveBackup/R/AssessmentTool/data','wqs_riverine_id305b_2013_albers')
     NWBD <- readOGR('C:/HardDriveBackup/R/AssessmentTool/data','vaNWBD_v4_albers')
@@ -44,15 +44,18 @@ shinyServer(function(input,output,session){
     # geometry from WQS layer
     output1 <- data.frame(matrix(NA, ncol = 18, nrow = 0))# Make new df to store results
     names(output1) <- c(names(WQS@data),"VAHU6","SiteID","StationID","Comment")
+    withProgress(message = 'Making Connections', detail = "Site 1", value = 0, {
     # Loop through new sites shapefile, buffering to latch on to WQS stream geometry
     for(i in 1:length(sites_shp)){
-      print(i)
+      # Increment the progress bar, and update the detail text.
+      incProgress(0.015, detail = paste("Site ", i))
+      
       site <- sites_shp[i,]
-      #nwbd_site <- NWBD[site,]
+      nwbd_site <- NWBD[site,]
       step1 <- gBuffer(sites_shp[i,],width=10)
       step1.2 <-WQS[step1,]
       if(nrow(step1.2@data)>0){
-        #step1.2@data$VAHU6 <- nwbd_site@data[,3]
+        step1.2@data$VAHU6 <- nwbd_site@data[,3]
         step1.2@data$SiteID <- i
         step1.2@data$StationID <- sites_shp@data$StationID[i]
         step1.2@data$Comment <- ' '
@@ -61,7 +64,7 @@ shinyServer(function(input,output,session){
         step2 <- gBuffer(sites_shp[i,],width=20)
         step2.2 <- WQS[step2,]
         if(nrow(step2.2@data)>0){
-          #step2.2@data$VAHU6 <- nwbd_site@data[,3]
+          step2.2@data$VAHU6 <- nwbd_site@data[,3]
           step2.2@data$SiteID <- i
           step2.2@data$StationID <- sites_shp@data$StationID[i]
           step2.2@data$Comment <- ' '
@@ -70,7 +73,7 @@ shinyServer(function(input,output,session){
           step3 <- gBuffer(sites_shp[i,],width=30)
           step3.2 <- WQS[step3,]
           if(nrow(step3.2@data)>0){
-            #step3.2@data$VAHU6 <- nwbd_site@data[,3]
+            step3.2@data$VAHU6 <- nwbd_site@data[,3]
             step3.2@data$SiteID <- i
             step3.2@data$StationID <- sites_shp@data$StationID[i]
             step3.2@data$Comment <- ' '
@@ -79,41 +82,48 @@ shinyServer(function(input,output,session){
             step4 <- gBuffer(sites_shp[i,],width=40)
             step4.2 <- WQS[step4,]
             if(nrow(step4.2@data)>0){
-              #step4.2@data$VAHU6 <- nwbd_site@data[,3]
+              step4.2@data$VAHU6 <- nwbd_site@data[,3]
               step4.2@data$SiteID <- i
               step4.2@data$StationID <- sites_shp@data$StationID[i]
               step4.2@data$Comment <- ' '
               output1 <- rbind(output1,step4.2@data)
             }else{
               step5 <- gBuffer(sites_shp[i,],width=50)
-              tryCatch({
-                step5.2 <- WQS[step5,]
-                if(nrow(step5.2@data)>0){
-                  #step5.2@data$VAHU6 <- nwbd_site@data[,3]
-                  step5.2@data$SiteID <- i
-                  step5.2@data$StationID <- sites_shp@data$StationID[i]
-                  step5.2@data$Comment <- ' '
-                  output1 <- rbind(output1,step5.2@data)
+              step5.2 <- WQS[step5,]
+              if(nrow(step4.2@data)>0){
+                step5.2@data$VAHU6 <- nwbd_site@data[,3]
+                step5.2@data$SiteID <- i
+                step5.2@data$StationID <- sites_shp@data$StationID[i]
+                step5.2@data$Comment <- ' '
+                output1 <- rbind(output1,step5.2@data)
                 }else{
-                  message <- data.frame(matrix(0,ncol=18,nrow=1))
-                  names(message) <- names(output1)
-                  #message$VAHU6 <- nwbd_site@data[,3]
-                  message$SiteID <- i
-                  message$StationID <- sites_shp@data$StationID[i]
-                  message$Comment <- 'Use GIS for this site'
-                  output1 <- rbind(output1,message)}
-              })
-            }
-          }
-        }
-      }
-    }
+                  step6 <- gBuffer(sites_shp[i,],width=300)
+                  tryCatch({
+                    step6.2 <- WQS[step6,]
+                    if(nrow(step6.2@data)>0){
+                      step6.2@data$VAHU6 <- nwbd_site@data[,3]
+                      step6.2@data$SiteID <- i
+                      step6.2@data$StationID <- sites_shp@data$StationID[i]
+                      step6.2@data$Comment <- 'Site Buffered 300 m; Review Results in Advanced Mapping Tab'
+                      output1 <- rbind(output1,step6.2@data)
+                    }else{
+                      message <- data.frame(matrix(0,ncol=18,nrow=1))
+                      names(message) <- names(output1)
+                      message$VAHU6 <- nwbd_site@data[,3]
+                      message$SiteID <- i
+                      message$StationID <- sites_shp@data$StationID[i]
+                      message$Comment <- 'Use GIS for this site'
+                      output1 <- rbind(output1,message)}
+              })}}}}}}})
     ## Step 3 : Test if there were multiple connections made to a single site 
     output2 <- output1 %>%
       group_by(StationID) %>%
       ddply(c('SiteID','StationID'),summarise,records=length(StationID)) 
     # Look through output2 results and subset StationID's that grabbed +1 geometry
     df <- data.frame(StationID=character(),SiteID=numeric())
+    # Progress Bar Update, halfway done
+    incProgress(0.5)
+    
     for(i in 1:nrow(output2)){
       if(output2$records[i]==1){
         print(paste(i,'secondgo',sep=''))
@@ -147,7 +157,7 @@ shinyServer(function(input,output,session){
             sitelist[i] <- as.character(unique(splitdfselect$StationID))
           }else{# Then WQS_ID is different for the same StationID so go to user selection on following tab
             splitdfselect_comment <- splitStationID[[i]] %>% # automatically select first entry if WQS_ID are identical
-              mutate(Comment=c('See Advanced Mapping Tab'))
+              mutate(Comment=c('Site Attached to 1+ Stream Geometry <50 m Buffer; See Advanced Mapping Tab'))
             userselectentry <- rbind(userselectentry,splitdfselect_comment)
             # Save StationID to final output list
             sitelist[i] <- as.character(unique(splitdfselect_comment$StationID))
@@ -167,7 +177,7 @@ shinyServer(function(input,output,session){
                                                                                     list(c(5,15,-1),c('5','15','All'))
                                                                                   ,pageLength=5))})
   
-  tableIssues <- reactive({subset(initialResults(), initialResults()$Comment %in% c("See Advanced Mapping Tab","Use GIS for this site"))})
+  tableIssues <- reactive({subset(initialResults(), initialResults()$Comment %in% c("Site Attached to 1+ Stream Geometry <50 m Buffer; See Advanced Mapping Tab","Use GIS for this site","Site Buffered 300 m; Review Results in Advanced Mapping Tab"))})
   
   output$outputTableIssues <- renderDataTable({datatable(tableIssues()
                                                          ,options=list(lengthMenu=list(c(5,15,-1),c('5','15','All')),pageLength=5))})
@@ -176,30 +186,15 @@ shinyServer(function(input,output,session){
                                             content=function(file){write.csv(initialResults(),file)}) #will need to change to finalfinal finish results
   
   #### ADVANCED MAPPING TAB ####
+  problemsites_tbl <- reactive({if(!is.null(inputFile())){
+    problemsites <- subset(inputFile(),StationID %in% unique(tableIssues()$StationID)) %>%
+      join(tableIssues()[,17:18],by='StationID') %>%
+      unique()}})
   
-  #plotInput <- function(){renderLeaflet({
-  #leaflet() %>% addProviderTiles('Thunderforest.Outdoors')%>%
-  #  addPolylines(data=testshape_prj,color='red', weight=3
-  #              ,group=testshape_prj@data$ID305B,popup=paste('ID305B:',testshape_prj@data$ID305B))
-  # })}
+  output$outputTableIssues_test <- renderTable({problemsites_tbl()})
   
-  output$outputTableIssues_repeat <- renderDataTable({datatable(tableIssues()
-                                                               ,options=list(lengthMenu=list(c(5,15,-1),c('5','15','All')),pageLength=5))})
-  output$issueMap <- renderLeaflet({
-    leaflet() %>% addProviderTiles('Thunderforest.Outdoors') %>%setView(lat=37.342,lng=	-79.740,zoom=6) #%>%
-    #addMarkers(data=tableIssues_shptbl(),popup=tableIssues()$StationID)
-  })
-  
-  
-  
-  #output$outputTableIssues_repeat2 <- renderTable({tableIssues_shptbl()})
-
-  #tableIssues_shptbl <- reactive({if(!is.null(inputFile())){
-  #  problemsites_tbl <- subset(inputFile(),StationID %in% unique(tableIssues()$StationID))}
- # })
-  
-  
-  observe({if(input$runButton2==T){
+  observe({if(input$runButton2==T){withProgress(message='Processing Sites',value=0,{
+    incProgress(0.25, detail = 'Loading GIS data')
     # Bring in planarized WQS layer to plot on leaflet map, reg version won't work properly
     WQS_p <- readOGR('C:/GIS/EmmaGIS/Assessment','wqs_riverine_id305b_2013_Planarized84')
     geometries <- tableIssues()$ID305B
@@ -208,25 +203,39 @@ shinyServer(function(input,output,session){
     WQS_p_selection@data$ID305B <- droplevels(WQS_p_selection@data$ID305B) #get rid of excess factor levels for palette options
     pal <- colorFactor(rainbow(length(levels(WQS_p_selection$ID305B))),domain=NULL)
     
-    #output$issueMap <- renderLeaflet({leaflet() %>% addProviderTiles('Thunderforest.Outdoors') %>%
-    #   setView(lat=37.342,lng=	-79.740,zoom=6) %>%
-    #  addMarkers(data=tableIssues_shptbl(),popup=tableIssues_shptbl()$StationID) %>%
-    # addPolylines(data=WQS_p_selection,color=~pal(ID305B), weight=3,group=WQS_p_selection@data$ID305B,popup=paste('ID305B:',WQS_p_selection@data$ID305B))
-    #})
-  }
+    # Increment the progress bar, and update the detail text.
+    incProgress(0.015, detail = paste("Site ", i))
     
-    #leafletProxy('issueMap') %>% 
-    # addMarkers(data=tableIssues_shptbl,popup=tableIssues_shptbl()$StationID) %>%
-    #addPolylines(data=WQS_p_selection,color=~pal(ID305B), weight=3,group=WQS_p_selection@data$ID305B,popup=paste('ID305B:',WQS_p_selection@data$ID305B))}
-  }) 
+    
+    output$issueMap <- renderLeaflet({
+      leaflet() %>% addProviderTiles('Thunderforest.Outdoors') %>%
+        setView(lat=37.342,lng=-79.740,zoom=6) %>%
+        addMarkers(data=problemsites_tbl(),popup=paste(sep="<br/>",problemsites_tbl()$StationID,problemsites_tbl()$Comment)) %>%
+        addPolylines(data=WQS_p_selection,color=~pal(ID305B), weight=3,group=WQS_p_selection@data$ID305B,popup=paste('ID305B:',WQS_p_selection@data$ID305B))})
+    })
+    }}) 
 })
 
-# need to sort out why points not showing up in map
+
 # need to build selection options, DT inspiration?
 # need to output to final table
 # need new tab and button to merge them
 # move download button to the last page
 # progress button on second run button, better progress buttons all around?
+
+
+
+
+
+
+
+#plotInput <- function(){renderLeaflet({
+#leaflet() %>% addProviderTiles('Thunderforest.Outdoors')%>%
+#  addPolylines(data=testshape_prj,color='red', weight=3
+#              ,group=testshape_prj@data$ID305B,popup=paste('ID305B:',testshape_prj@data$ID305B))
+# })}
+
+
 
 
 
