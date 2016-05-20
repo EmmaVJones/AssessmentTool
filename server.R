@@ -9,6 +9,7 @@ library(plyr)
 library(dplyr)
 library(ggmap)
 library(leaflet)
+library(DT)
 
 
 #WQS <- readOGR('C:/HardDriveBackup/R/AssessmentTool/data','wqs_riverine_id305b_2013_albers')
@@ -17,33 +18,27 @@ library(leaflet)
 #sites <- read.csv('data/sites_2009prob_SLIM.csv')
 
 shinyServer(function(input,output,session){
-  output$table <- renderTable({
-    inFile <- input$sites
-    if(is.null(inFile))
-      return(NULL)
-    read.csv(inFile$datapath)
+  #### BASIC TOOL TAB ####
+  inputFile <- reactive({inFile <- input$sites
+  if(is.null(inFile))
+    return(NULL)
+  read.csv(inFile$datapath)
   })
+  output$inputTable <- renderTable({inputFile()})
   
-  #plotInput <- function(){renderLeaflet({
-  #leaflet() %>% addProviderTiles('Thunderforest.Outdoors')%>%
-  #  addPolylines(data=testshape_prj,color='red', weight=3
-  #              ,group=testshape_prj@data$ID305B,popup=paste('ID305B:',testshape_prj@data$ID305B))
-  # })}
   
-  finishResults <- eventReactive(input$runButton,{withProgress(message='Making Connections',value=0,{
+  initialResults <- eventReactive(input$runButton,{withProgress(message='Making Connections',value=0,{
     ## Step 1: Bring in standards GIS layer, NWBD layer
     WQS <- readOGR('C:/HardDriveBackup/R/AssessmentTool/data','wqs_riverine_id305b_2013_albers')
     NWBD <- readOGR('C:/HardDriveBackup/R/AssessmentTool/data','vaNWBD_v4_albers')
     # Make shapefile from site csv file, copy projection from WQS layer
-    inFile <- input$sites
-    sites_shp <- read.csv(inFile$datapath)
+    sites_shp <- inputFile()
     
     #sites_shp <- sites
     coordinates(sites_shp) <- ~Longitude+Latitude
     sites_shp@proj4string <- CRS("+proj=longlat +datum=WGS84") #first need to give it it's own projection 
     sites_shp <- spTransform(sites_shp,CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 
                                            +y_0=0 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0 ")) #then can transform it to same as other shapefiles
-    #sites_shp@proj4string <- NWBD@proj4string
     
     ## Step 2: Loop through sites buffering 10, 20, 30, 40, and 50m to connect point to line (stream) 
     # geometry from WQS layer
@@ -164,19 +159,109 @@ shinyServer(function(input,output,session){
         rbind(autoselectentry) %>%
         rbind(userselectentry)
     }
-        return(slimoutput)
+    return(slimoutput)
   })
   })
-  output$outputTable <- DT::renderDataTable({DT::datatable(finishResults(),options=list(lengthMenu=
-                                                                           list(c(5,15,-1),c('5','15','All'))
-                                                                         ,pageLength=5))})
-  output$outputTableIssues <- DT::renderDataTable({DT::datatable(
-    subset(finishResults(), finishResults()$Comment %in% c("See Advanced Mapping Tab","Use GIS for this site"))
-           ,options=list(lengthMenu=list(c(5,15,-1),c('5','15','All')),pageLength=5))})
-                                                         
+  
+  output$resultsTable <- renderDataTable({datatable(initialResults(),options=list(lengthMenu=
+                                                                                    list(c(5,15,-1),c('5','15','All'))
+                                                                                  ,pageLength=5))})
+  
+  tableIssues <- reactive({subset(initialResults(), initialResults()$Comment %in% c("See Advanced Mapping Tab","Use GIS for this site"))})
+  
+  output$outputTableIssues <- renderDataTable({datatable(tableIssues()
+                                                         ,options=list(lengthMenu=list(c(5,15,-1),c('5','15','All')),pageLength=5))})
+  
   output$downloadResults <- downloadHandler(filename=function(){paste('Results_',input$sites,sep='')},
-                                            content=function(file){write.csv(finishResults(),file)})
+                                            content=function(file){write.csv(initialResults(),file)}) #will need to change to finalfinal finish results
+  
+  #### ADVANCED MAPPING TAB ####
+  
+  #plotInput <- function(){renderLeaflet({
+  #leaflet() %>% addProviderTiles('Thunderforest.Outdoors')%>%
+  #  addPolylines(data=testshape_prj,color='red', weight=3
+  #              ,group=testshape_prj@data$ID305B,popup=paste('ID305B:',testshape_prj@data$ID305B))
+  # })}
+  
+  output$outputTableIssues_repeat <- renderDataTable({datatable(tableIssues()
+                                                               ,options=list(lengthMenu=list(c(5,15,-1),c('5','15','All')),pageLength=5))})
+  output$issueMap <- renderLeaflet({
+    leaflet() %>% addProviderTiles('Thunderforest.Outdoors') %>%setView(lat=37.342,lng=	-79.740,zoom=6) #%>%
+    #addMarkers(data=tableIssues_shptbl(),popup=tableIssues()$StationID)
+  })
+  
+  
+  
+  #output$outputTableIssues_repeat2 <- renderTable({tableIssues_shptbl()})
+
+  #tableIssues_shptbl <- reactive({if(!is.null(inputFile())){
+  #  problemsites_tbl <- subset(inputFile(),StationID %in% unique(tableIssues()$StationID))}
+ # })
+  
+  
+  observe({if(input$runButton2==T){
+    # Bring in planarized WQS layer to plot on leaflet map, reg version won't work properly
+    WQS_p <- readOGR('C:/GIS/EmmaGIS/Assessment','wqs_riverine_id305b_2013_Planarized84')
+    geometries <- tableIssues()$ID305B
+    num_geometries <- which(WQS_p@data$ID305B %in% geometries)
+    WQS_p_selection <- WQS_p[num_geometries,]
+    WQS_p_selection@data$ID305B <- droplevels(WQS_p_selection@data$ID305B) #get rid of excess factor levels for palette options
+    pal <- colorFactor(rainbow(length(levels(WQS_p_selection$ID305B))),domain=NULL)
+    
+    #output$issueMap <- renderLeaflet({leaflet() %>% addProviderTiles('Thunderforest.Outdoors') %>%
+    #   setView(lat=37.342,lng=	-79.740,zoom=6) %>%
+    #  addMarkers(data=tableIssues_shptbl(),popup=tableIssues_shptbl()$StationID) %>%
+    # addPolylines(data=WQS_p_selection,color=~pal(ID305B), weight=3,group=WQS_p_selection@data$ID305B,popup=paste('ID305B:',WQS_p_selection@data$ID305B))
+    #})
+  }
+    
+    #leafletProxy('issueMap') %>% 
+    # addMarkers(data=tableIssues_shptbl,popup=tableIssues_shptbl()$StationID) %>%
+    #addPolylines(data=WQS_p_selection,color=~pal(ID305B), weight=3,group=WQS_p_selection@data$ID305B,popup=paste('ID305B:',WQS_p_selection@data$ID305B))}
+  }) 
 })
+
+# need to sort out why points not showing up in map
+# need to build selection options, DT inspiration?
+# need to output to final table
+# need new tab and button to merge them
+# move download button to the last page
+# progress button on second run button, better progress buttons all around?
+
+
+
+## Select site that is issue
+#site <- factor(unique(splitStationID[[i]]$StationID), levels=levels(output1$StationID))
+#num <- which(sites_shp@data$StationID %in% site) # Find plotting order of StationID in question
+## Select geometries that are in question
+#geom <- splitStationID[[i]]$ID305B
+#num2 <- which(WQS_p@data$ID305B %in% geom) # Link selected ID305B info to actual WQS geometry
+#testshape <- WQS_p[num2,]
+#testshape@data$ID305B <- droplevels(testshape@data$ID305B) #get rid of excess factor levels for palette options
+# leaflet attempt
+#l<-leaflet() %>% addProviderTiles('Thunderforest.Outdoors') 
+#pal <- colorFactor(rainbow(length(levels(testshape$ID305B))),domain=NULL)
+#output$map <- renderLeaflet({
+#  l%>%addPolylines(data=testshape,color=~pal(ID305B), weight=3,group=testshape@data$ID305B
+#                   ,popup=paste('ID305B:',testshape@data$ID305B))})
+#})
+
+#observe({#if(input$runButton2){
+#  inFile <- input$sites
+#  sites_shp <- read.csv(inFile$datapath)
+#sites_shp <- sites
+#  problemsites_shp <- subset(sites_shp,StationID %in% unique(tableIssues()$StationID))
+#problemsites_shp <- subset(sites_shp,StationID %in% unique(tableIssues_test$StationID))
+
+#coordinates(problemsites_shp) <- ~Longitude+Latitude
+#problemsites_shp@proj4string <- CRS("+proj=longlat +datum=WGS84") 
+
+# leafletProxy('issueMap') %>% addMarkers(data=problemsites_shp,~Longitude,~Latitude)
+#leafletProxy('issueMap') %>% addMarkers(data=tableIssues_shp(),~Longitude,~Latitude)
+#}
+# })
+
+
 
 
 # next step, use data table selection (should i automatically highlight sites that need work in first pane?)
@@ -185,13 +270,12 @@ shinyServer(function(input,output,session){
 # once user selections are made, need to output 'final' merged table for them to see and give download button
 
 
-### NAVBAR PAGE WITHIN TAB 1? then i could have second tab to pull in data for analysis... see Oregon guy code
-# term: tabset
 
-
-
-
-
+#tableIssues_shp <- reactive({if(!is.null(inputFile())){
+#problemsites_shp <- subset(inputFile(),StationID %in% unique(tableIssues()$StationID))
+# coordinates(problemsites_shp) <- ~Longitude+Latitude
+#problemsites_shp@proj4string <- CRS("+proj=longlat +datum=WGS84")}
+#})
 
 
 

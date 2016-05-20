@@ -9,6 +9,7 @@ library(plyr)
 library(dplyr)
 library(ggmap)
 library(leaflet)
+library(DT)
 
 
 #WQS <- readOGR('C:/HardDriveBackup/R/AssessmentTool/data','wqs_riverine_id305b_2013_albers')
@@ -23,25 +24,35 @@ shinyUI(
                         fileInput('sites','Upload Sites',accept='.csv',width='100%'),
                         #run analysis button
                         actionButton('runButton','Run Sites'),
-                        p('Click the Run Sites button after you have uploaded a .csv of stations'),
+                        p("Click the Run Sites button after you have uploaded a .csv of stations.
+                          Depending on your internet connection, you might have to click the 'Results Table'
+                          tab to coerce the calculations to begin."),
                         #download results button
                         downloadButton("downloadResults","Download Results")
-                      ),
+                        ),
                       mainPanel(
                         tabsetPanel(
-                          tabPanel("Input Table",tableOutput('table')),
-                          tabPanel("Results Table",DT::dataTableOutput('outputTable')),
-                          tabPanel("Geometry Issues Table",DT::dataTableOutput('outputTableIssues'))
-                                )
-             )),
+                          tabPanel("Input Table",tableOutput('inputTable')),
+                          tabPanel("Results Table",dataTableOutput('resultsTable')),
+                          tabPanel("Geometry Issues Table",dataTableOutput('outputTableIssues'))
+                        )
+                      )),
              tabPanel('Advanced Mapping',
-                      sidebarPanel(leafletOutput("map2", width="100%", height="100%"))
+                      sidebarPanel(actionButton('runButton2','Run Sites'),
+                                   p('Click the Run Sites button after you have identified sites in the previous step that latched to more than one stream geometry')),
+                      mainPanel(
+                        tabsetPanel(
+                          tabPanel("Geometry Issues Table",tableOutput('outputTableIssues_repeat')),
+                          tabPanel("Map",leafletOutput("issueMap")),
+                          tabPanel("test",tableOutput('outputTableIssues_repeat2'))
+                        ))
+                      
              ),
              tabPanel('About',fluidRow(column(6,
-                      h3("This app was created for the DEQ Assessors to automate the Stations Table 
+                                              h3("This app was created for the DEQ Assessors to automate the Stations Table 
                          building process."),
-                      h6("Please contact Emma Jones at emma.jones@deq.virginia.gov for additional 
+                                              h6("Please contact Emma Jones at emma.jones@deq.virginia.gov for additional 
                          information."))))
-  ))
+             ))
 
 #leafletOutput('map305B'),
