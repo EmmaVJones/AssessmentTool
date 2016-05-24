@@ -43,7 +43,16 @@ shinyUI(
                       mainPanel(
                         tabsetPanel(
                           tabPanel("Sites For Review",tableOutput('outputTableIssues_test')),
-                          tabPanel("Map",leafletOutput("issueMap"))
+                          tabPanel("Map",
+                                   leafletOutput("issueMap"),
+                                   hr(),
+                                   fluidRow(
+                                     column(3,
+                                            h4("ID305B Selection"),
+                                            selectInput('StationID', 'StationID', ' '),
+                                            uiOutput('optionsID305B')
+                                            )))
+                          
                           
                         ))
                       

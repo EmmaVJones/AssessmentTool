@@ -15,7 +15,7 @@ library(DT)
 #WQS <- readOGR('C:/HardDriveBackup/R/AssessmentTool/data','wqs_riverine_id305b_2013_albers')
 #select <- readOGR('C:/HardDriveBackup/R/AssessmentTool/data','userselecttest20132014_prj84') # try to break the userselection section with mutliple sites that need help in 1 file
 #WQS_p <- readOGR('C:/GIS/EmmaGIS/Assessment','wqs_riverine_id305b_2013_Planarized84')
-#sites <- read.csv('data/sites_2009prob.csv')
+#sites <- read.csv('data/sites_2009probSLIM.csv')
 
 shinyServer(function(input,output,session){
   #### BASIC TOOL TAB ####
@@ -114,7 +114,8 @@ shinyServer(function(input,output,session){
                       message$StationID <- sites_shp@data$StationID[i]
                       message$Comment <- 'Use GIS for this site'
                       output1 <- rbind(output1,message)}
-              })}}}}}}})
+              })}}}}}}
+      })
     ## Step 3 : Test if there were multiple connections made to a single site 
     output2 <- output1 %>%
       group_by(StationID) %>%
@@ -206,14 +207,23 @@ shinyServer(function(input,output,session){
     # Increment the progress bar, and update the detail text.
     incProgress(0.015, detail = paste("Site ", i))
     
-    
     output$issueMap <- renderLeaflet({
       leaflet() %>% addProviderTiles('Thunderforest.Outdoors') %>%
         setView(lat=37.342,lng=-79.740,zoom=6) %>%
         addMarkers(data=problemsites_tbl(),popup=paste(sep="<br/>",problemsites_tbl()$StationID,problemsites_tbl()$Comment)) %>%
         addPolylines(data=WQS_p_selection,color=~pal(ID305B), weight=3,group=WQS_p_selection@data$ID305B,popup=paste('ID305B:',WQS_p_selection@data$ID305B))})
+    
+    #optionsOut <- reactive({
+      
+    #})
+    
+    #output$optionsID305B <- renderUI({selectInput('ID305Bvariables','ID305Bvariables',optionsOut())})
+    
+    
     })
     }}) 
+  ##### ID305B User Selection Component 
+  
 })
 
 
