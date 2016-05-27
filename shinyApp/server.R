@@ -234,20 +234,20 @@ shinyServer(function(input,output,session){
   
   output$subsetTable2 <- renderTable({subTable()})
   
-  #comboTable <- observe({
-    #if(length(subTable())>0){rbind(tableGoodSites(),subTable())
-    #}else{tableGoodSites()}})
+  comboTable <- reactive({if(input$mergeTables==T){
+    if(length(subTable())>0){rbind(tableGoodSites(),subTable())
+    }else{tableGoodSites()}}})
   
-  #output$comboResults <- renderDataTable({comboTable()})
+  output$comboResults <- renderDataTable({comboTable()})
   
-  observe({if(input$mergeTables==T){
-    output$comboResults <- renderDataTable({
-      if(length(subTable())>0){rbind(tableGoodSites(),subTable())
-        }else{tableGoodSites()}
-    })}})
+  #observe({if(input$mergeTables==T){
+   # output$comboResults <- renderDataTable({
+     # if(length(subTable())>0){rbind(tableGoodSites(),subTable())
+     #   }else{tableGoodSites()}
+    #})}})
   
-  #output$downloadResults <- observe({downloadHandler(filename=function(){paste('Results_',input$sites,sep='')},
-                                           # content=function(file){write.csv(comboTable(),file)})}) 
+  output$downloadResults <- downloadHandler(filename=function(){paste('Results_',input$sites,sep='')},
+                                            content=function(file){write.csv(comboTable(),file)}) 
   
 })
   

@@ -21,13 +21,15 @@ shinyUI(
   navbarPage('Assessment Tool: Station Table Populator',
              tabPanel('Basic Tool',
                       sidebarPanel(
+                        h4(strong('Instructions:')),
+                        p('Select a .csv file of stations.'),
                         fileInput('sites','Upload Sites',accept='.csv',width='100%'),
+                        hr(),
                         #run analysis button
-                        actionButton('runButton','Run Sites'),
                         p("Click the Run Sites button after you have uploaded a .csv of stations.
                           Depending on your internet connection, you might have to click the 'Results Table'
-                          tab to coerce the calculations to begin.")
-                        ),
+                          tab to coerce the calculations to begin."),
+                        actionButton('runButton','Run Sites')),
                       mainPanel(
                         tabsetPanel(
                           tabPanel("Input Table",tableOutput('inputTable')),
@@ -37,7 +39,7 @@ shinyUI(
                       )),
              tabPanel('Advanced Mapping',
                       sidebarPanel(
-                        h4('Instructions:'),
+                        h4(strong('Instructions:')),
                         p('Click the Run Sites button after you have identified sites in the previous step that need further review.'),
                         actionButton('runButton2','Run Problem Sites'),
                         hr(),
@@ -56,13 +58,15 @@ shinyUI(
              ),
              tabPanel('Final Results',
                       sidebarPanel(
+                        h4(strong('Instructions:')),
                         #merge results button
-                        actionButton('mergeTables','Merge Results'),
                         p('Click the Merge Results button if you had sites to manage in the Advanced Mapping tab.'),
+                        actionButton('mergeTables','Merge Results'),
+                        hr(),
                         #download results button
-                        downloadButton("downloadResults","Download Results"),
                         p('Click the Download Results button after you have completed and reviewed all analyses
-                          to save the results to a location on your computer.')),
+                          to save the results to a location on your computer.'),
+                        downloadButton("downloadResults","Download Results")),
                       mainPanel(
                         tabsetPanel(
                           tabPanel("Results Table",tableOutput('resultsTable2')),
