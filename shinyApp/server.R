@@ -15,7 +15,7 @@ library(DT)
 #WQS <- readOGR('C:/HardDriveBackup/R/AssessmentTool/data','wqs_riverine_id305b_2013_albers')
 #select <- readOGR('C:/HardDriveBackup/R/AssessmentTool/data','userselecttest20132014_prj84') # try to break the userselection section with mutliple sites that need help in 1 file
 #WQS_p <- readOGR('C:/GIS/EmmaGIS/Assessment','wqs_riverine_id305b_2013_Planarized84')
-#sites <- read.csv('C:/HardDriveBackup/R/AssessmentTool/data/sites_2009prob.csv')
+#sites <- read.csv('C:/HardDriveBackup/R/AssessmentTool/data/sites_2009prob_SLIM.csv')
 
 shinyServer(function(input,output,session){
   #### BASIC TOOL TAB ####
@@ -185,14 +185,14 @@ shinyServer(function(input,output,session){
                                                                                     list(c(5,15,-1),c('5','15','All'))
                                                                                   ,pageLength=5))})
   
+  tableGoodSites <- reactive({subset(initialResults(), !(initialResults()$Comment %in% c("Site Attached to 1+ Stream Geometry <50 m Buffer; See Advanced Mapping Tab","Use GIS for this site","Site Buffered 300 m; Review Results in Advanced Mapping Tab")))})
+  
   tableIssues <- reactive({subset(initialResults(), initialResults()$Comment %in% c("Site Attached to 1+ Stream Geometry <50 m Buffer; See Advanced Mapping Tab","Use GIS for this site","Site Buffered 300 m; Review Results in Advanced Mapping Tab"))})
   
   output$outputTableIssues <- renderDataTable({datatable(tableIssues()
                                                          ,options=list(lengthMenu=list(c(5,15,-1),c('5','15','All')),pageLength=5))})
   
-  output$downloadResults <- downloadHandler(filename=function(){paste('Results_',input$sites,sep='')},
-                                            content=function(file){write.csv(initialResults(),file)}) #will need to change to finalfinal finish results
-  
+   
   #### ADVANCED MAPPING TAB ####
   problemsites_tbl <- reactive({if(!is.null(inputFile())){
     problemsites <- subset(inputFile(),StationID %in% unique(tableIssues()$StationID)) %>%
@@ -213,7 +213,6 @@ shinyServer(function(input,output,session){
     
     # Increment the progress bar
     for (i in 1:length(tableIssues())) {incProgress(0.015, detail = paste("Processing Site ", i))}
-    
     output$issueMap <- renderLeaflet({
       leaflet() %>% addProviderTiles('Thunderforest.Outdoors') %>%
         setView(lat=37.342,lng=-79.740,zoom=6) %>%
@@ -221,14 +220,88 @@ shinyServer(function(input,output,session){
                                                        ,problemsites_tbl()$Comment)) %>%
         addPolylines(data=WQS_p_selection,color=~pal(ID305B), weight=5,group=WQS_p_selection@data$ID305B
                      ,popup=paste('ID305B:',WQS_p_selection@data$ID305B))})
+  })
+  }})
+  ##### ID305B User Selection Component 
+  output$userSelectionTable <- renderDataTable(tableIssues(),server = TRUE)
+ 
+  subTable <- reactive({tableIssues()[as.numeric(input$userSelectionTable_rows_selected),]})
   
-    ##### ID305B User Selection Component 
-    tableIssues()
-    #output$optionsID305B <- renderUI({
-    #  selectInput("optionsID305B_list","ID305B Selection",tableIssues())#[,1])
-    #}) ### will this work once I identify list to show?
+  output$subsetTable <- renderTable({subTable()})
     
-    
-    })
-  }}) 
+  ### Final Results Tab ####
+  output$resultsTable2 <- renderTable({tableGoodSites()})
+  
+  output$subsetTable2 <- renderTable({subTable()})
+  
+  #comboTable <- observe({
+    #if(length(subTable())>0){rbind(tableGoodSites(),subTable())
+    #}else{tableGoodSites()}})
+  
+  #output$comboResults <- renderDataTable({comboTable()})
+  
+  observe({if(input$mergeTables==T){
+    output$comboResults <- renderDataTable({
+      if(length(subTable())>0){rbind(tableGoodSites(),subTable())
+        }else{tableGoodSites()}
+    })}})
+  
+  #output$downloadResults <- observe({downloadHandler(filename=function(){paste('Results_',input$sites,sep='')},
+                                           # content=function(file){write.csv(comboTable(),file)})}) 
+  
 })
+  
+
+
+
+
+#output$rowNums <- renderPrint({
+ # rnum <- input$userSelectionTable_rows_selected
+ # if(length(rnum)){
+  #  cat('These rows were selected: \n\n')
+   # cat(rnum,sep=', ')}})
+
+
+
+
+
+#output$rowNums2 <- renderPrint({
+# if(rnumList()==T){
+#cat('The structure is: \n\n')
+#cat(print(rnumList))
+# cat(typeof(rnumList()))
+#cat(str(rnumList()))}
+#})
+# could I put in a table on the left side that summarizes ID305B the user selected and StationID?
+# would just need to pull out $StationID $ID305B from selected columns
+# hold for now bc might be too much replication
+#http://stackoverflow.com/questions/31068319/reset-row-selection-for-dtrenderdatatable-in-shiny-r one vote
+
+
+# need to research user selection part, don't know if I should change this to the ui side so user can download, 
+# but it needs to go into the next tab so I cn rbind to the rest of the data already run through the tool
+#userSubset <- reactive({
+# rnum <- input$userSelectionTable_rows_selected # do I need this as a list?
+# sub <- subset(tableIssues(), row.names(tableIssues) %in% input$userSelectionTable_rows_selected)
+# return(sub)
+#})
+# now bring that dataframe into next tab to see if it worked!!!!!
+#output$userSelectionTable2 <- renderTable({
+#userSubset()
+# subTable <- subset(tableIssues(), row.names(tableIssues) %in% input$userSelectionTable_rows_selected)
+#})
+#})
+#}})
+#row.names(initialResults()) <- initialResults()$ID305B
+
+#output$userSelectionTable2 <- renderDataTable({initialResults()[input$checkme,]})
+#output$userSelectionTable2 <- renderDataTable({initialResults()[input$checkme,]})
+
+#mergedResults <- eventReactive(input$mergeTables,{
+# finalResults <- rbind(initialResults(),userSubset())
+#})
+
+
+#testlist <- c(3,4,5)
+#test <- subset(Stations, row.names(Stations) %in% testlist)
+#row.names(Stations)

@@ -36,32 +36,38 @@ shinyUI(
                         )
                       )),
              tabPanel('Advanced Mapping',
-                      sidebarPanel(actionButton('runButton2','Run Problem Sites'),
-                                   p('Click the Run Sites button after you have identified sites in the previous step that need further review.')),
+                      sidebarPanel(
+                        h4('Instructions:'),
+                        p('Click the Run Sites button after you have identified sites in the previous step that need further review.'),
+                        actionButton('runButton2','Run Problem Sites'),
+                        hr(),
+                        p("Once the lower table is populated, select only the ID305B's would you like to keep for each site, then proceed to the User Selection Tab to review your results before moving to the Final Results Tab.")),
                       mainPanel(
                         tabsetPanel(
                           tabPanel("Sites For Review",tableOutput('outputTableIssues_test')),
                           tabPanel("Map",
                                    leafletOutput("issueMap"),
                                    hr(),
-                                   fluidRow(
-                                     column(3,
-                                            h4("ID305B Selection"),
-                                            selectInput('StationID', 'StationID', ' '),
-                                            uiOutput('optionsID305B')
-                                     )))
-                          
-                          
+                                   h4("Based on the map, which ID305B's would you like to keep for each site?"),
+                                   fluidRow(dataTableOutput('userSelectionTable'))),
+                          tabPanel("User Selection",tableOutput("subsetTable"))
                         ))
                       
              ),
              tabPanel('Final Results',
                       sidebarPanel(
+                        #merge results button
+                        actionButton('mergeTables','Merge Results'),
+                        p('Click the Merge Results button if you had sites to manage in the Advanced Mapping tab.'),
                         #download results button
                         downloadButton("downloadResults","Download Results"),
                         p('Click the Download Results button after you have completed and reviewed all analyses
                           to save the results to a location on your computer.')),
-                      mainPanel(dataTableOutput('finalResultsTable'))),
+                      mainPanel(
+                        tabsetPanel(
+                          tabPanel("Results Table",tableOutput('resultsTable2')),
+                          tabPanel("Advanced Mapping Results",tableOutput('subsetTable2')),
+                          tabPanel("Combined Results",dataTableOutput('comboResults'))))),
              tabPanel('About',fluidRow(column(12,
                                               h5("This app was created for the DEQ Assessors to automate the Stations Table 
                                                  building process."),
