@@ -31,38 +31,38 @@ shinyUI(
                                     ,selected=''),
                         hr(),
                         #run analysis button
-                        p("Navigate to the 'Results Table' tab and click the 'Merge Sites with GIS Information' button after you have uploaded a .csv of stations."),
+                        p(strong("Navigate to the 'Results Table'"), "tab and ",strong("click the 'Merge Sites with GIS Information' button")," after you have uploaded a .csv of stations."),
                         p("Calculation progress can be tracked in the upper right hand corner."),
                         actionButton('runButton','Merge Sites with GIS Information'),
                         hr(),
-                        p("Check the 'Geometry Issues Table' to verify all sites latched to the only one ID305B. If the table
+                        p(strong("Check the 'Geometry Issues Table'"), "to verify all sites latched to the only one ID305B. If the table
                           is populated, then you need to proceed to the 'Advanced Mapping' tab to manually select WQ Standards 
                           information. Otherwise, you may proceed directly to the 'Final Results' tab. "),width=3),
                       mainPanel(
                         tabsetPanel(
                           tabPanel("Input Table",tableOutput('inputTable')),
-                          tabPanel("Results Table",dataTableOutput('resultsTable')),
-                          tabPanel("Geometry Issues Table",dataTableOutput('outputTableIssues'))
+                          tabPanel("Results Table",tableOutput('resultsTable')),
+                          tabPanel("Geometry Issues Table",tableOutput('outputTableIssues'))
                         )
                       )),
              tabPanel('Advanced Mapping',
                       column(3,
                              wellPanel( #sidebarPanel(
                         h4(strong('Instructions:')),
-                        p("Click the 'Plot Problem Sites on Map' button after you have identified sites in the previous step that need further review."),
+                        p("Click the 'Plot Problem Sites on Map' button", strong("after you have identified sites in the previous step that need further review.")),
                         p("Calculation progress can be tracked in the upper right hand corner."),
                         actionButton('runButton2','Plot Problem Sites on Map'),
                         hr(),
-                        p("Once the lower table is populated, select only the ID305B's would you like to keep for each site, then proceed 
+                        p("Once the lower table is populated,", strong("select only the ID305B's would you like to keep"), "for each site, then proceed 
                           to the User Selection Tab to review your results before moving to the Final Results Tab."),
                         downloadButton("downloadProblemSites","Download Problem Sites"))),#,width=3),
                       column(9, #mainPanel(
                         tabsetPanel(
                           tabPanel("Sites For Review",tableOutput('outputTableIssues_test'),
-                                   p("These sites are identified from your original uploaded file because they either 1) attached to too many
-                                     stream geometries (with differing WQ Standards information) within a buffered area 2) required a large (300 m) buffer
-                                     to attach to stream geometries and should be reviewed or 3) did not attach to any streams within a large (300 m) buffer 
-                                     and will need further review in a GIS.")),
+                                   p("These sites are identified from your original uploaded file because they either"),
+                                   p("1) attached to too many stream geometries (with differing WQ Standards information) within a buffered area"),
+                                   p("2) required a large (300 m) buffer to attach to stream geometries and should be reviewed or"),
+                                   p("3) did not attach to any streams within a large (300 m) buffer and will need further review in ArcGIS.")),
                           tabPanel("Map",
                                    leafletOutput("issueMap"),
                                    hr(),
@@ -77,7 +77,7 @@ shinyUI(
                       sidebarPanel(
                         h4(strong('Instructions:')),
                         #merge results button
-                        p('Click the Merge Results button if you had sites to manage in the Advanced Mapping tab.'),
+                        p("Click the 'Generate Final Results' button after you have reviewed all sites in the Basic Tool and Advanced Mapping tab."),
                         actionButton('mergeTables','Generate Final Results'),
                         hr(),
                         #download results button
@@ -93,8 +93,9 @@ shinyUI(
                       column(2,wellPanel(
                         h4(strong('Instructions:')),
                         p("Navigate through the drop down list of StationID's to assign additional station information."),
-                        p("You can review your work prior to downloading results in the 'Review' tab.")),
-                        selectInput('stationID',label='StationID',choices= c("","FakeName1","fakename2"))),
+                        p("You can review your work prior to downloading results in the 'Review' tab."),
+                        uiOutput("choose_Station"))),
+                        #selectInput('stationID',label='StationID',choices= c("","FakeName1","fakename2"))),
                       column(9,
                              tabsetPanel(
                                tabPanel('Station Information'#,

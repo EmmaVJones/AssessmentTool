@@ -182,16 +182,15 @@ shinyServer(function(input,output,session){
   })
   })
   
-  output$resultsTable <- renderDataTable({datatable(initialResults(),options=list(lengthMenu=
-                                                                                    list(c(5,15,-1),c('5','15','All'))
-                                                                                  ,pageLength=5))})
+  output$resultsTable <- renderTable({initialResults()})
+  #output$resultsTable <- renderDataTable({datatable(initialResults(),options=list(lengthMenu=list(c(5,15,-1),c('5','15','All')),pageLength=5))})
   
   tableGoodSites <- reactive({subset(initialResults(), !(initialResults()$Comment %in% c("Site Attached to 1+ Stream Geometry <50 m Buffer; See Advanced Mapping Tab","Use GIS for this site","Site Buffered 300 m; Review Results in Advanced Mapping Tab")))})
   
   tableIssues <- reactive({subset(initialResults(), initialResults()$Comment %in% c("Site Attached to 1+ Stream Geometry <50 m Buffer; See Advanced Mapping Tab","Use GIS for this site","Site Buffered 300 m; Review Results in Advanced Mapping Tab"))})
   
-  output$outputTableIssues <- renderDataTable({datatable(tableIssues()
-                                                         ,options=list(lengthMenu=list(c(5,15,-1),c('5','15','All')),pageLength=5))})
+  output$outputTableIssues <- renderTable({tableIssues()})
+  #output$outputTableIssues <- renderDataTable({datatable(tableIssues(),options=list(lengthMenu=list(c(5,15,-1),c('5','15','All')),pageLength=5))})
   
    
   #### ADVANCED MAPPING TAB ####
@@ -244,13 +243,36 @@ shinyServer(function(input,output,session){
   output$subsetTable2 <- renderTable({subTable()})
   
   comboTable <- reactive({if(input$mergeTables==T){
-    if(length(subTable())>0){rbind(tableGoodSites(),subTable())
-    }else{tableGoodSites()}}})
+    if(length(subTable())>0){
+      combo <- rbind(tableGoodSites(),subTable()) %>%
+        mutate(REGION=input$regionalOffice)%>%
+        select(REGION,everything(),-Comment)
+    }else{mutate(tableGoodSites(),REGION=input$regionalOffice)%>%
+        select(REGION,everything(),-Comment)}}})
   
   output$comboResults <- renderDataTable({comboTable()})
   
   output$downloadResults <- downloadHandler(filename=function(){paste('Results_',input$sites,sep='')},
-                                            content=function(file){write.csv(comboTable(),file)}) 
+                                            content=function(file){write.csv(comboTable(),file)})
+  
+  ### IR Station Table Tab
+  output$choose_Station <- renderUI({
+    # If missing input, return to avoid error later in function
+    if(is.null(comboTable()))
+       return()
+       
+    # Get StationID's from comboTable
+    stationNames <- as.character(comboTable()$StationID)
+    
+    selectInput('stations',"Choose a StationID to enter additional information for the IR Station Table",
+                choices= stationNames)
+  })
+  
+  output$review <- renderTable({comboTable()
+    # If missing input, return to avoid error later in function
+    #if(is.null(comboTable()))
+      #return()
+  })
 })
   
 
