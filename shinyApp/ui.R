@@ -12,11 +12,6 @@ library(leaflet)
 library(DT)
 
 
-#WQS <- readOGR('C:/HardDriveBackup/R/AssessmentTool/data','wqs_riverine_id305b_2013_albers')
-#select <- readOGR('C:/HardDriveBackup/R/AssessmentTool/data','userselecttest20132014_prj84') # try to break the userselection section with mutliple sites that need help in 1 file
-#WQS_p <- readOGR('C:/GIS/EmmaGIS/Assessment','wqs_riverine_id305b_2013_Planarized84')
-#sites <- read.csv('data/sites_2009prob.csv')
-
 shinyUI(
   navbarPage('Assessment Tool: Station Table Populator',
              tabPanel('Basic Tool',
