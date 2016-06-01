@@ -7,7 +7,7 @@ library(maptools)
 library(rgeos)
 library(reshape2)
 library(plyr)
-library(dplyr)
+library(dplyr)#
 library(ggmap)
 library(leaflet)
 library(DT)

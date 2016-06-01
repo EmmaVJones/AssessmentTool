@@ -13,6 +13,8 @@ library(leaflet)
 library(DT)
 
 
+
+
 shinyUI(
   navbarPage('Assessment Tool: Station Table Populator',
              tabPanel('Basic Tool',
@@ -96,10 +98,13 @@ shinyUI(
                         p("You can review your work prior to downloading results in the 'Review' tab."),
                         uiOutput("choose_Station"))),
                         #selectInput('stationID',label='StationID',choices= c("","FakeName1","fakename2"))),
-                      column(9,
+                      column(4,
                              tabsetPanel(
-                               tabPanel('Station Information'#,
+                               tabPanel('Station Information',
                                          # bunch of select inputs
+                                        numericInput('depth',h4('Depth'),value=0.3)
+                                        selectInput('stationType1',h4('Station Type 1'),choices= )
+                                        
                                          ),
                                tabPanel('Review',dataTableOutput('review'))))
                       ),
