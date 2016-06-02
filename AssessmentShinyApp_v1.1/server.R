@@ -13,6 +13,7 @@ library(leaflet)
 library(DT)
 
 
+
 shinyServer(function(input,output,session){
   #### BASIC TOOL TAB ####
   volumes <- getVolumes()
@@ -268,11 +269,29 @@ shinyServer(function(input,output,session){
                 choices= stationNames)
   })
   
-  output$review <- renderTable({comboTable()
+  # Get ID305B from comboTable that matches StationID selected in output$choose_Station
+  output$ID305Bselection <- renderPrint({as.character(comboTable()[which(comboTable()$StationID==input$stations),2])})
+  
+  # Take in user data for each site selected to add to review table
+  userValues <- reactiveValues()
+  userValues$df <- data.frame(Depth=numeric(0),ID305B_2=numeric(0),ID305B_3=numeric(0),STATION_TYPE_1=numeric(0),STATION_TYPE_2=numeric(0),STATION_TYPE_3=numeric(0),TEMP_VIO=numeric(0),TEMP_SAMP=numeric(0),TEMP_STAT=numeric(0),DO_VIO=numeric(0),DO_SAMP=numeric(0),DO_STAT=numeric(0),PH_VIO=numeric(0),PH_SAMP=numeric(0),PH_STAT=numeric(0))
+  
+  newStationEntry <- observe({
+    if(input$addEntry > 0) {
+      newLine <- isolate(c(input$depth,input$ID305B_2,input$ID305B_3,input$stationType1,input$stationType2,input$stationType3,input$tempViolation,input$tempSample,input$tempStatus,input$doViolation,input$doSample,input$doStatus,input$pHViolation,input$pHSample,input$pHStatus))
+      isolate(userValues$df[nrow(userValues$df) + 1,] <- c(input$depth,input$ID305B_2,input$ID305B_3,input$stationType1,input$stationType2,input$stationType3,input$tempViolation,input$tempSample,input$tempStatus,input$doViolation,input$doSample,input$doStatus,input$pHViolation,input$pHSample,input$pHStatus))
+    }
+  })
+  
+  output$review <- renderTable({userValues$df})
+    
+    
+  
+  #output$review <- renderTable({comboTable()
     # If missing input, return to avoid error later in function
     #if(is.null(comboTable()))
       #return()
-  })
+  #})
 })
   
 

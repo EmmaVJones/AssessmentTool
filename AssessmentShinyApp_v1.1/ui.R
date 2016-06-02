@@ -14,7 +14,6 @@ library(DT)
 
 
 
-
 shinyUI(
   navbarPage('Assessment Tool: Station Table Populator',
              tabPanel('Basic Tool',
@@ -94,19 +93,42 @@ shinyUI(
              tabPanel('IR Stations Table',
                       column(2,wellPanel(
                         h4(strong('Instructions:')),
-                        p("Navigate through the drop down list of StationID's to assign additional station information."),
+                        p("Navigate through the drop down list of StationID's to assign additional station information. Add all necessary information in the 'Station Information' tab prior to pressing the Add Entry button."),
                         p("You can review your work prior to downloading results in the 'Review' tab."),
-                        uiOutput("choose_Station"))),
-                        #selectInput('stationID',label='StationID',choices= c("","FakeName1","fakename2"))),
-                      column(4,
+                        uiOutput("choose_Station"),
+                        hr(),
+                        actionButton('addEntry','Add Entry'))),
+                      column(6,
                              tabsetPanel(
                                tabPanel('Station Information',
-                                         # bunch of select inputs
-                                        numericInput('depth',h4('Depth'),value=0.3)
-                                        selectInput('stationType1',h4('Station Type 1'),choices= )
-                                        
-                                         ),
-                               tabPanel('Review',dataTableOutput('review'))))
+                                        # bunch of select inputs
+                                        column(6,
+                                        numericInput('depth',h4('Depth'),value=0.3),
+                                        h4('AU ID #1'),
+                                        verbatimTextOutput('ID305Bselection'),
+                                        textInput('ID305B_2',label=h4('AU ID #2')),
+                                        textInput('ID305B_3',label=h4('AU ID #3')),
+                                        hr(),
+                                        h4('Conventional Water Column'),
+                                        textInput('tempViolation',label=h4('Temperature Violations')), 
+                                        textInput('tempSample',label=h4('Temperature Samples')), 
+                                        selectInput('tempStatus',h4('Temperature Status'),choices=paste(tblkp_AMB_STAT_CODES[,1],tblkp_AMB_STAT_CODES[,2],sep='  |  '))
+                                        ),
+                                        column(6,
+                                        selectInput('stationType1',h4('Station Type 1'),choices=paste(STA_TYPE_CODE[,1],STA_TYPE_CODE[,2],sep="  |  ")),
+                                        selectInput('stationType2',h4('Station Type 2'),choices=paste(STA_TYPE_CODE[,1],STA_TYPE_CODE[,2],sep="  |  ")),
+                                        selectInput('stationType3',h4('Station Type 3'),choices=paste(STA_TYPE_CODE[,1],STA_TYPE_CODE[,2],sep="  |  "))
+                                        ),
+                                        column(6,
+                                        textInput('doViolation',label=h4('DO Violations')), 
+                                        textInput('doSample',label=h4('DO Samples')), 
+                                        selectInput('doStatus',h4('DO Status'),choices=paste(tblkp_AMB_STAT_CODES[,1],tblkp_AMB_STAT_CODES[,2],sep='  |  ')),
+                                        textInput('pHViolation',label=h4('pH Violations')), 
+                                        textInput('pHSample',label=h4('pH Samples')), 
+                                        selectInput('pHStatus',h4('pH Status'),choices=paste(tblkp_AMB_STAT_CODES[,1],tblkp_AMB_STAT_CODES[,2],sep='  |  '))
+                                               )),
+                               tabPanel('Review',tableOutput('review'),
+                                        downloadButton("downloadStationTable","Download IR Stations Table"))))
                       ),
              tabPanel('About',fluidRow(column(12,
                                               h5("This app was created for the DEQ Assessors to automate the Stations Table 
