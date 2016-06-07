@@ -117,7 +117,7 @@ shinyServer(function(input,output,session){
                       message$Comment <- 'Use GIS for this site'
                       output1 <- rbind(output1,message)}
                   })}}}}}}
-      })
+    })
     ## Step 3 : Test if there were multiple connections made to a single site 
     output2 <- output1 %>%
       group_by(StationID) %>%
@@ -160,11 +160,11 @@ shinyServer(function(input,output,session){
               # Save StationID to final output list
               sitelist[i] <- as.character(unique(splitdfselect_comment$StationID))
             }else{
-            # Save entry to a new dataframe to later append back to main geometry output dataframe
-            splitdfselect <- splitStationID[[i]] # automatically select first entry if WQS_ID are identical
-            autoselectentry <- rbind(autoselectentry,splitdfselect[!duplicated(splitdfselect[,c('StationID','SiteID')]),])
-            # Save StationID to final output list
-            sitelist[i] <- as.character(unique(splitdfselect$StationID))}
+              # Save entry to a new dataframe to later append back to main geometry output dataframe
+              splitdfselect <- splitStationID[[i]] # automatically select first entry if WQS_ID are identical
+              autoselectentry <- rbind(autoselectentry,splitdfselect[!duplicated(splitdfselect[,c('StationID','SiteID')]),])
+              # Save StationID to final output list
+              sitelist[i] <- as.character(unique(splitdfselect$StationID))}
           }else{# Then WQS_ID is different for the same StationID so go to user selection on following tab
             splitdfselect_comment <- splitStationID[[i]] %>% # automatically select first entry if WQS_ID are identical
               mutate(Comment=c('Site Attached to 1+ Stream Geometry <50 m Buffer; See Advanced Mapping Tab'))
@@ -193,7 +193,7 @@ shinyServer(function(input,output,session){
   output$outputTableIssues <- renderTable({tableIssues()})
   #output$outputTableIssues <- renderDataTable({datatable(tableIssues(),options=list(lengthMenu=list(c(5,15,-1),c('5','15','All')),pageLength=5))})
   
-   
+  
   #### ADVANCED MAPPING TAB ####
   problemsites_tbl <- reactive({if(!is.null(inputFile())){
     problemsites <- subset(inputFile(),StationID %in% unique(tableIssues()$StationID)) %>%
@@ -203,7 +203,7 @@ shinyServer(function(input,output,session){
   output$outputTableIssues_test <- renderTable({problemsites_tbl()})
   
   output$downloadProblemSites <- downloadHandler(filename=function(){paste('ProblemSites_',input$sites,sep='')},
-                                            content=function(file){write.csv(problemsites_tbl(),file)})
+                                                 content=function(file){write.csv(problemsites_tbl(),file)})
   
   observe({if(input$runButton2==T){withProgress(message='Processing Sites',value=0,{
     incProgress(0.25, detail = 'Loading GIS data')
@@ -233,11 +233,11 @@ shinyServer(function(input,output,session){
   }})
   ##### ID305B User Selection Component 
   output$userSelectionTable <- renderDataTable(tableIssues(),server = TRUE)
- 
+  
   subTable <- reactive({tableIssues()[as.numeric(input$userSelectionTable_rows_selected),]})
   
   output$subsetTable <- renderTable({subTable()})
-    
+  
   ### Final Results Tab ####
   output$resultsTable2 <- renderTable({tableGoodSites()})
   
@@ -260,8 +260,8 @@ shinyServer(function(input,output,session){
   output$choose_Station <- renderUI({
     # If missing input, return to avoid error later in function
     if(is.null(comboTable()))
-       return()
-       
+      return()
+    
     # Get StationID's from comboTable
     stationNames <- as.character(comboTable()$StationID)
     
@@ -269,14 +269,28 @@ shinyServer(function(input,output,session){
                 choices= stationNames)
   })
   
+  ## Establish some input parameters to make later user input steps easier
+  StationIDreactive <- reactive({as.character(comboTable()[which(comboTable()$StationID==input$stations),18])})
+  LATreactive <- reactive({as.character(inputFile()[which(inputFile()$StationID==input$stations),2])})
+  LONreactive <- reactive({as.character(inputFile()[which(inputFile()$StationID==input$stations),3])})
+  WSHD_IDreactive <- reactive({as.character(comboTable()[which(comboTable()$StationID==input$stations),16])})
+  VAHU6reactive <- reactive({as.character(comboTable()[which(comboTable()$StationID==input$stations),16])})
   # Get ID305B from comboTable that matches StationID selected in output$choose_Station
-  output$ID305Bselection <- renderPrint({as.character(comboTable()[which(comboTable()$StationID==input$stations),2])})
+  ID305Breactive <- reactive({as.character(comboTable()[which(comboTable()$StationID==input$stations),2])})
+  output$ID305Bselection <- renderPrint({ID305Breactive()})
   
   # Take in user data for each site selected to add to review table
+  inputFile2 <- reactive({inFile2 <- input$uploadPrevSession
+  if(is.null(inFile2))
+    return(NULL)
+  read.csv(inFile2$datapath)
+  })
+  
   userValues <- reactiveValues()
-  userValues$df <- data.frame(Depth=numeric(0),ID305B_2=numeric(0),ID305B_3=numeric(0),STATION_TYPE_1=numeric(0)
-                              ,STATION_TYPE_2=numeric(0),STATION_TYPE_3=numeric(0),TEMP_VIO=numeric(0)
-                              ,TEMP_SAMP=numeric(0),TEMP_STAT=numeric(0),DO_VIO=numeric(0),DO_SAMP=numeric(0)
+  userValues$df <- data.frame(ID305B_1=numeric(0),ID305B_2=numeric(0),ID305B_3=numeric(0),DEPTH=numeric(0),STATION_ID=numeric(0)
+                              ,REGION=numeric(0),STATION_TYPE_1=numeric(0),STATION_TYPE_2=numeric(0),STATION_TYPE_3=numeric(0)
+                              ,STATION_LAT=numeric(0),STATION_LON=numeric(0),WATERSHED_ID=numeric(0),VAHU6=numeric(0)
+                              ,TEMP_VIO=numeric(0),TEMP_SAMP=numeric(0),TEMP_STAT=numeric(0),DO_VIO=numeric(0),DO_SAMP=numeric(0)
                               ,DO_STAT=numeric(0),PH_VIO=numeric(0),PH_SAMP=numeric(0),PH_STAT=numeric(0)
                               ,ECOLI_VIO=numeric(0),ECOLI_SAMP=numeric(0),ECOLI_STAT=numeric(0)
                               ,ENTER_VIO=numeric(0),ENTER_SAMP=numeric(0),ENTER_STAT=numeric(0)
@@ -285,11 +299,12 @@ shinyServer(function(input,output,session){
                               ,FISH_MET_VIO=numeric(0),FISH_MET_STAT=numeric(0),FISH_TOX_VIO=numeric(0),FISH_TOX_STAT=numeric(0)
                               ,BENTHIC_STAT=numeric(0),NUT_TP_VIO=numeric(0),NUT_TP_SAMP=numeric(0),NUT_TP_STAT=numeric(0)
                               ,NUT_CHLA_VIO=numeric(0),NUT_CHLA_SAMP=numeric(0),NUT_CHLA_STAT=numeric(0),COMMENTS=numeric(0))
-
+  
   
   newStationEntry <- observe({
     if(input$addEntry > 0) {
-      newLine <- isolate(c(input$depth,input$ID305B_2,input$ID305B_3,input$stationType1,input$stationType2,input$stationType3
+      newLine <- isolate(c(ID305Breactive(),input$ID305B_2,input$ID305B_3,input$depth,StationIDreactive(),input$regionalOffice
+                           ,input$stationType1,input$stationType2,input$stationType3,LATreactive(),LONreactive(),WSHD_IDreactive(),VAHU6reactive()
                            ,input$tempViolation,input$tempSample,input$tempStatus,input$doViolation,input$doSample,input$doStatus
                            ,input$pHViolation,input$pHSample,input$pHStatus,input$eColiViolation,input$eColiSample,input$eColiStatus
                            ,input$enteroViolation,input$enteroSample,input$enteroStatus,input$WCmetalsViolation,input$WCmetalsStatus
@@ -297,9 +312,11 @@ shinyServer(function(input,output,session){
                            ,input$StoxicsViolation,input$StoxicsStatus,input$FTmetalsViolation,input$FTmetalsStatus
                            ,input$FTtoxicsViolation,input$FTtoxicsStatus,input$benthicStatus,input$tpExceedance,input$tpSample
                            ,input$tpStatus,input$chlAExceedance,input$chlASample,input$chlAStatus,input$comments))
-                           
-      isolate(userValues$df[nrow(userValues$df) + 1,] <- c(input$depth,input$ID305B_2,input$ID305B_3,input$stationType1,input$stationType2
-                                                           ,input$stationType3,input$tempViolation,input$tempSample,input$tempStatus,input$doViolation
+      
+      isolate(userValues$df[nrow(userValues$df) + 1,] <- c(ID305Breactive(),input$ID305B_2,input$ID305B_3,input$depth,StationIDreactive(),input$regionalOffice
+                                                           ,input$stationType1,input$stationType2
+                                                           ,input$stationType3,LATreactive(),LONreactive(),WSHD_IDreactive(),VAHU6reactive()
+                                                           ,input$tempViolation,input$tempSample,input$tempStatus,input$doViolation
                                                            ,input$doSample,input$doStatus,input$pHViolation,input$pHSample,input$pHStatus,input$eColiViolation,input$eColiSample,input$eColiStatus
                                                            ,input$enteroViolation,input$enteroSample,input$enteroStatus,input$WCmetalsViolation,input$WCmetalsStatus
                                                            ,input$WCtoxicsViolation,input$WCtoxicsStatus,input$SmetalsViolation,input$SmetalsStatus
@@ -309,14 +326,25 @@ shinyServer(function(input,output,session){
     }
   })
   
-  output$review <- renderTable({userValues$df})
+  
+  
+  output$review <- renderTable({
+    if(is.null(inputFile2())){return(userValues$df)
+    }else(rbind(inputFile2(),userValues$df))
+    #userValues$df
+  })
+  
+  
+  
+  
+  
+  
   
   output$downloadStationTable <- downloadHandler(filename=function(){paste('StationTable_',input$sites,sep='')},
                                                  content=function(file){write.csv(userValues$df,file)})
-    
+  
   
   
 })
-  
 
 
